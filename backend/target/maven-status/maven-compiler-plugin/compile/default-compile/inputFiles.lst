@@ -1,0 +1,12 @@
+D:\project workspace\backend\src\main\java\com\trackit\security\JwtAuthenticationFilter.java
+D:\project workspace\backend\src\main\java\com\trackit\controller\HabitController.java
+D:\project workspace\backend\src\main\java\com\trackit\repository\UserRepository.java
+D:\project workspace\backend\src\main\java\com\trackit\TrackItApplication.java
+D:\project workspace\backend\src\main\java\com\trackit\model\Habit.java
+D:\project workspace\backend\src\main\java\com\trackit\security\SecurityConfig.java
+D:\project workspace\backend\src\main\java\com\trackit\config\WebConfig.java
+D:\project workspace\backend\src\main\java\com\trackit\model\User.java
+D:\project workspace\backend\src\main\java\com\trackit\security\JwtUtil.java
+D:\project workspace\backend\src\main\java\com\trackit\controller\AuthController.java
+D:\project workspace\backend\src\main\java\com\trackit\security\CustomUserDetailsService.java
+D:\project workspace\backend\src\main\java\com\trackit\repository\HabitRepository.java
