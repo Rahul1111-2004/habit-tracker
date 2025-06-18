@@ -12,9 +12,9 @@ import {
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import axios from 'axios';
 import { toast } from 'react-toastify';
 import { notificationService } from '../utils/notificationService';
+import axios from '../utils/axios';
 
 const AddHabit = () => {
   const navigate = useNavigate();
@@ -32,6 +32,9 @@ const AddHabit = () => {
     }
     if (!formData.reminderTime) {
       newErrors.reminderTime = 'Reminder time is required';
+    } else if (formData.reminderTime <= new Date()) {
+      newErrors.reminderTime = 'Reminder time must be in the future';
+      toast.error('Cannot set reminder time in the past');
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -41,20 +44,11 @@ const AddHabit = () => {
     e.preventDefault();
     if (validateForm()) {
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.post(
-          'http://localhost:8080/api/habits',
-          {
-            name: formData.name,
-            note: formData.note,
-            reminderTime: formData.reminderTime.toISOString(),
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await axios.post('/habits', {
+          name: formData.name,
+          note: formData.note,
+          reminderTime: formData.reminderTime.toISOString(),
+        });
         toast.success('Habit added successfully!');
         
         // Schedule notification if reminder time is set
@@ -95,16 +89,22 @@ const AddHabit = () => {
   };
 
   const handleDateChange = (newValue) => {
-    setFormData((prev) => ({
-      ...prev,
-      reminderTime: newValue,
-    }));
-    if (errors.reminderTime) {
+    if (newValue <= new Date()) {
+      setErrors((prev) => ({
+        ...prev,
+        reminderTime: 'Reminder time must be in the future',
+      }));
+      toast.error('Cannot set reminder time in the past');
+    } else {
       setErrors((prev) => ({
         ...prev,
         reminderTime: '',
       }));
     }
+    setFormData((prev) => ({
+      ...prev,
+      reminderTime: newValue,
+    }));
   };
 
   return (

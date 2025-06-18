@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../utils/axios';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext(null);
@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await axios.post('http://localhost:8080/api/auth/login', {
+      const response = await axios.post('/auth/login', {
         username,
         password,
       });
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (username, password, email) => {
     try {
-      await axios.post('http://localhost:8080/api/auth/register', {
+      await axios.post('/auth/register', {
         username,
         password,
         email,

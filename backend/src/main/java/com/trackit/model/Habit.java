@@ -16,9 +16,13 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "habits")
 public class Habit {
@@ -39,6 +43,9 @@ public class Habit {
 
     @Column(name = "completed", nullable = false)
     private boolean completed = false;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
 
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)

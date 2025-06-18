@@ -3,25 +3,31 @@ import { toast } from 'react-toastify';
 class NotificationService {
   constructor() {
     this.hasPermission = false;
+    this.isSupported = 'Notification' in window;
     this.checkPermission();
   }
 
   async checkPermission() {
-    if (!('Notification' in window)) {
-      console.log('This browser does not support notifications');
+    if (!this.isSupported) {
+      console.warn('This browser does not support notifications');
       return;
     }
 
     if (Notification.permission === 'granted') {
       this.hasPermission = true;
     } else if (Notification.permission !== 'denied') {
-      const permission = await Notification.requestPermission();
-      this.hasPermission = permission === 'granted';
+      try {
+        const permission = await Notification.requestPermission();
+        this.hasPermission = permission === 'granted';
+      } catch (error) {
+        console.error('Error checking notification permission:', error);
+        this.hasPermission = false;
+      }
     }
   }
 
   async requestPermission() {
-    if (!('Notification' in window)) {
+    if (!this.isSupported) {
       toast.error('Your browser does not support notifications');
       return false;
     }
@@ -38,51 +44,62 @@ class NotificationService {
       
       return this.hasPermission;
     } catch (error) {
+      console.error('Error requesting notification permission:', error);
       toast.error('Error requesting notification permission');
       return false;
     }
   }
 
   scheduleNotification(habit) {
+    if (!this.isSupported) {
+      toast.error('Your browser does not support notifications');
+      return;
+    }
+
     if (!this.hasPermission) {
       this.requestPermission();
       return;
     }
 
-    const reminderTime = new Date(habit.reminderTime);
-    const now = new Date();
+    try {
+      const reminderTime = new Date(habit.reminderTime);
+      const now = new Date();
 
-    if (reminderTime <= now) {
-      toast.warning('Reminder time must be in the future');
-      return;
+      if (reminderTime <= now) {
+        toast.warning('Reminder time must be in the future');
+        return;
+      }
+
+      const timeUntilReminder = reminderTime.getTime() - now.getTime();
+
+      // Schedule the notification
+      const notificationId = setTimeout(() => {
+        this.showNotification(habit);
+      }, timeUntilReminder);
+
+      return notificationId;
+    } catch (error) {
+      console.error('Error scheduling notification:', error);
+      toast.error('Error scheduling notification');
+      return null;
     }
-
-    const timeUntilReminder = reminderTime.getTime() - now.getTime();
-
-    // Schedule the notification
-    setTimeout(() => {
-      this.showNotification(habit);
-    }, timeUntilReminder);
-
-    // Store the notification ID for later cancellation if needed
-    return setTimeout(() => {}, timeUntilReminder);
   }
 
   showNotification(habit) {
-    if (!this.hasPermission) return;
+    try {
+      const notification = new Notification('Habit Reminder', {
+        body: `Time to complete your habit: ${habit.name}`,
+        icon: '/favicon.ico',
+      });
 
-    const notification = new Notification('TrackIt Reminder', {
-      body: `Time to complete your habit: ${habit.name}`,
-      icon: '/favicon.ico', // You can replace this with your app's icon
-      badge: '/favicon.ico',
-      tag: `habit-${habit.id}`,
-      requireInteraction: true,
-    });
-
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+    } catch (error) {
+      console.error('Error showing notification:', error);
+      toast.error('Error showing notification');
+    }
   }
 
   cancelNotification(notificationId) {
