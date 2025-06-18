@@ -8,6 +8,5 @@ com\trackit\TrackItApplication.class
 com\trackit\repository\UserRepository.class
 com\trackit\controller\HabitController.class
 com\trackit\security\SecurityConfig.class
-com\trackit\TrackItApplication$1.class
 com\trackit\config\WebConfig.class
 com\trackit\controller\AuthController.class

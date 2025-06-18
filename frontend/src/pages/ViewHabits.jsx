@@ -24,11 +24,12 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { toast } from 'react-toastify';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { notificationService } from '../utils/notificationService';
+import axios from '../utils/axios';
 
 const ViewHabits = () => {
   const navigate = useNavigate();
@@ -43,12 +44,7 @@ const ViewHabits = () => {
 
   const fetchHabits = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:8080/api/habits', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get('/habits');
       setHabits(response.data);
     } catch (error) {
       toast.error('Failed to fetch habits');
@@ -61,36 +57,45 @@ const ViewHabits = () => {
 
   const handleToggleComplete = async (habitId, completed) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.patch(
-        `http://localhost:8080/api/habits/${habitId}/toggle`,
-        { completed: !completed },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      fetchHabits();
-      toast.success('Habit status updated');
+      const now = new Date().toISOString();
+      const requestData = { 
+        completed: !completed,
+        completedAt: !completed ? now : null
+      };
+
+      await axios.patch(`/habits/${habitId}/toggle`, requestData);
+      await fetchHabits();
+
+      if (!completed) {
+        toast.success('Habit completed! Keep it up, good work!');
+      } else {
+        toast.info('Habit marked as incomplete');
+      }
+
+      window.dispatchEvent(new CustomEvent('habitsUpdated'));
     } catch (error) {
-      toast.error('Failed to update habit status');
+      console.error('Toggle habit error:', error);
+      toast.error(error.response?.data || 'Failed to update habit status');
     }
   };
 
   const handleDelete = async (habitId) => {
     if (window.confirm('Are you sure you want to delete this habit?')) {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`http://localhost:8080/api/habits/${habitId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        fetchHabits();
+        await axios.delete(`/habits/${habitId}`);
+
+        // Cancel the notification for this habit
+        const notifications = JSON.parse(localStorage.getItem('habitNotifications') || '{}');
+        if (notifications[habitId]) {
+          notificationService.cancelNotification(notifications[habitId]);
+          delete notifications[habitId];
+          localStorage.setItem('habitNotifications', JSON.stringify(notifications));
+        }
+
+        await fetchHabits();
         toast.success('Habit deleted successfully');
       } catch (error) {
-        toast.error('Failed to delete habit');
+        toast.error(error.response?.data || 'Failed to delete habit');
       }
     }
   };
@@ -107,25 +112,17 @@ const ViewHabits = () => {
 
   const handleEditSubmit = async () => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.patch(
-        `http://localhost:8080/api/habits/${selectedHabit.id}`,
-        {
-          name: editFormData.name,
-          note: editFormData.note,
-          reminderTime: editFormData.reminderTime.toISOString(),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.patch(`/habits/${selectedHabit.id}`, {
+        name: editFormData.name,
+        note: editFormData.note,
+        reminderTime: editFormData.reminderTime.toISOString(),
+      });
+      
       setEditDialogOpen(false);
-      fetchHabits();
+      await fetchHabits();
       toast.success('Habit updated successfully');
     } catch (error) {
-      toast.error('Failed to update habit');
+      toast.error(error.response?.data || 'Failed to update habit');
     }
   };
 

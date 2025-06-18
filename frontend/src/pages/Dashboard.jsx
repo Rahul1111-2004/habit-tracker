@@ -30,8 +30,9 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js';
-import axios from 'axios';
+import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
 
 ChartJS.register(
   CategoryScale,
@@ -84,60 +85,137 @@ const Dashboard = () => {
     },
   ]);
 
+  const fetchData = async () => {
+    try {
+      const response = await axios.get('/habits');
+      const habitsData = response.data;
+      setHabits(habitsData);
+
+      // Calculate statistics
+      const completedHabits = habitsData.filter((h) => h.completed).length;
+      const currentStreak = calculateStreak(habitsData);
+      const longestStreak = calculateLongestStreak(habitsData);
+
+      setStats({
+        totalHabits: habitsData.length,
+        completedHabits,
+        currentStreak,
+        longestStreak,
+      });
+
+      // Update achievements based on stats
+      setAchievements((prev) =>
+        prev.map((achievement) => {
+          if (achievement.id === 2) {
+            return { ...achievement, unlocked: currentStreak >= 7 };
+          }
+          if (achievement.id === 3) {
+            return { ...achievement, unlocked: completedHabits >= 50 };
+          }
+          if (achievement.id === 4) {
+            return {
+              ...achievement,
+              unlocked: currentStreak >= 7 && completedHabits >= 50,
+            };
+          }
+          return achievement;
+        })
+      );
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+      toast.error('Failed to fetch habits data');
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:8080/api/habits', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const habitsData = response.data;
-        setHabits(habitsData);
+    fetchData();
 
-        // Calculate statistics
-        const completedHabits = habitsData.filter((h) => h.completed).length;
-        const currentStreak = calculateStreak(habitsData);
-        const longestStreak = Math.max(currentStreak, 5); // Example value
-
-        setStats({
-          totalHabits: habitsData.length,
-          completedHabits,
-          currentStreak,
-          longestStreak,
-        });
-
-        // Update achievements based on stats
-        setAchievements((prev) =>
-          prev.map((achievement) => {
-            if (achievement.id === 2) {
-              return { ...achievement, unlocked: currentStreak >= 7 };
-            }
-            if (achievement.id === 3) {
-              return { ...achievement, unlocked: completedHabits >= 50 };
-            }
-            if (achievement.id === 4) {
-              return {
-                ...achievement,
-                unlocked: currentStreak >= 7 && completedHabits >= 50,
-              };
-            }
-            return achievement;
-          })
-        );
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      }
+    // Add event listener for habit updates
+    const handleHabitsUpdated = () => {
+      fetchData();
     };
 
-    fetchData();
+    window.addEventListener('habitsUpdated', handleHabitsUpdated);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('habitsUpdated', handleHabitsUpdated);
+    };
   }, []);
 
   const calculateStreak = (habits) => {
-    // This is a simplified streak calculation
-    // In a real app, you'd want to track daily completions
-    return Math.floor(Math.random() * 10); // Example value
+    if (!habits || habits.length === 0) return 0;
+
+    // Sort habits by completion date
+    const completedHabits = habits
+      .filter(h => h.completed)
+      .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+
+    if (completedHabits.length === 0) return 0;
+
+    let streak = 1;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Check if the most recent completion was today
+    const lastCompletion = new Date(completedHabits[0].completedAt);
+    lastCompletion.setHours(0, 0, 0, 0);
+
+    if (lastCompletion.getTime() !== today.getTime()) {
+      return 0; // Streak is broken if last completion wasn't today
+    }
+
+    // Count consecutive days
+    for (let i = 1; i < completedHabits.length; i++) {
+      const currentDate = new Date(completedHabits[i].completedAt);
+      currentDate.setHours(0, 0, 0, 0);
+      
+      const previousDate = new Date(completedHabits[i - 1].completedAt);
+      previousDate.setHours(0, 0, 0, 0);
+
+      const dayDifference = (previousDate - currentDate) / (1000 * 60 * 60 * 24);
+      
+      if (dayDifference === 1) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  };
+
+  const calculateLongestStreak = (habits) => {
+    if (!habits || habits.length === 0) return 0;
+
+    // Sort habits by completion date
+    const completedHabits = habits
+      .filter(h => h.completed)
+      .sort((a, b) => new Date(a.completedAt) - new Date(b.completedAt));
+
+    if (completedHabits.length === 0) return 0;
+
+    let longestStreak = 0;
+    let currentStreak = 1;
+
+    for (let i = 1; i < completedHabits.length; i++) {
+      const currentDate = new Date(completedHabits[i].completedAt);
+      currentDate.setHours(0, 0, 0, 0);
+      
+      const previousDate = new Date(completedHabits[i - 1].completedAt);
+      previousDate.setHours(0, 0, 0, 0);
+
+      const dayDifference = (currentDate - previousDate) / (1000 * 60 * 60 * 24);
+      
+      if (dayDifference === 1) {
+        currentStreak++;
+        longestStreak = Math.max(longestStreak, currentStreak);
+      } else {
+        currentStreak = 1;
+      }
+    }
+
+    return longestStreak;
   };
 
   const lineChartData = {

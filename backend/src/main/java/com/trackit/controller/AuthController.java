@@ -23,7 +23,6 @@ import com.trackit.security.JwtUtil;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5173")
 public class AuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
@@ -101,7 +100,7 @@ public class AuthController {
                 return ResponseEntity.badRequest().body("Email already exists");
             }
 
-            // Create new user
+            // Creating  new user
             User user = new User();
             user.setUsername(username);
             String encodedPassword = passwordEncoder.encode(password);
@@ -131,7 +130,7 @@ public class AuthController {
                 return ResponseEntity.badRequest().body("Username and password are required");
             }
 
-            // Check if user exists
+            // Checking for user exists or not
             User user = userRepository.findByUsername(username).orElse(null);
             if (user == null) {
                 logger.warn("Login failed: User not found - {}", username);
