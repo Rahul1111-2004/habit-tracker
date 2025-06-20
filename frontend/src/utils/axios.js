@@ -10,7 +10,7 @@ const instance = axios.create({
   withCredentials: true
 });
 
-// Add a request interceptor
+
 instance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -24,25 +24,25 @@ instance.interceptors.request.use(
   }
 );
 
-// Add a response interceptor
+
 instance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
       const { status } = error.response;
       
-      // Handle authentication errors
+      
       if (status === 401 || status === 403) {
-        // Clear all auth-related data
+       
         localStorage.removeItem('token');
         localStorage.removeItem('username');
         localStorage.removeItem('habitNotifications');
         
-        // Redirect to login
+       
         window.location.href = '/login';
       }
       
-      // Log the error for debugging
+     
       console.error('API Error:', {
         status,
         data: error.response.data,

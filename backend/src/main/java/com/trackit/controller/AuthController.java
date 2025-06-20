@@ -56,7 +56,7 @@ public class AuthController {
             String password = request.get("password");
             String email = request.get("email");
 
-            // Validate input
+          
             if (username == null || username.trim().isEmpty()) {
                 logger.warn("Registration failed: Username is required");
                 return ResponseEntity.badRequest().body("Username is required");
@@ -70,37 +70,37 @@ public class AuthController {
                 return ResponseEntity.badRequest().body("Email is required");
             }
 
-            // Validate username length
+           
             if (username.length() < 3) {
                 logger.warn("Registration failed: Username too short");
                 return ResponseEntity.badRequest().body("Username must be at least 3 characters long");
             }
 
-            // Validate password length
+            
             if (password.length() < 6) {
                 logger.warn("Registration failed: Password too short");
                 return ResponseEntity.badRequest().body("Password must be at least 6 characters long");
             }
 
-            // Validate email format
+          
             if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
                 logger.warn("Registration failed: Invalid email format");
                 return ResponseEntity.badRequest().body("Invalid email format");
             }
 
-            // Check if username exists
+           
             if (userRepository.existsByUsername(username)) {
                 logger.warn("Registration failed: Username already exists");
                 return ResponseEntity.badRequest().body("Username already exists");
             }
 
-            // Check if email exists
+            
             if (userRepository.existsByEmail(email)) {
                 logger.warn("Registration failed: Email already exists");
                 return ResponseEntity.badRequest().body("Email already exists");
             }
 
-            // Creating  new user
+            
             User user = new User();
             user.setUsername(username);
             String encodedPassword = passwordEncoder.encode(password);
@@ -130,7 +130,7 @@ public class AuthController {
                 return ResponseEntity.badRequest().body("Username and password are required");
             }
 
-            // Checking for user exists or not
+        
             User user = userRepository.findByUsername(username).orElse(null);
             if (user == null) {
                 logger.warn("Login failed: User not found - {}", username);
@@ -138,10 +138,10 @@ public class AuthController {
             }
             logger.info("User found in database: {}", username);
             
-            // Log the stored password hash (for debugging only)
+           
             logger.info("Stored password hash: {}", user.getPassword());
             
-            // Verify password
+           
             boolean passwordMatches = passwordEncoder.matches(password, user.getPassword());
             logger.info("Password match result: {}", passwordMatches);
             

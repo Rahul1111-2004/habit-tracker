@@ -72,7 +72,7 @@ class NotificationService {
 
       const timeUntilReminder = reminderTime.getTime() - now.getTime();
 
-      // Schedule the notification
+    
       const notificationId = setTimeout(() => {
         this.showNotification(habit);
       }, timeUntilReminder);
@@ -105,6 +105,45 @@ class NotificationService {
   cancelNotification(notificationId) {
     if (notificationId) {
       clearTimeout(notificationId);
+    }
+  }
+
+  scheduleMissedHabitNotifications(habits) {
+    if (!this.isSupported || !this.hasPermission) return;
+ 
+    if (this.missedTimeout) clearTimeout(this.missedTimeout);
+   
+    const now = new Date();
+    const nextMidnight = new Date(now);
+    nextMidnight.setHours(24, 0, 0, 0);
+    const msUntilMidnight = nextMidnight - now;
+    this.missedTimeout = setTimeout(() => {
+      this.checkAndNotifyMissedHabits(habits);
+      
+      this.scheduleMissedHabitNotifications(habits);
+    }, msUntilMidnight);
+  }
+
+  checkAndNotifyMissedHabits(habits) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    habits.forEach(habit => {
+      if (habit.recurrence === 'daily' && !habit.completed) {
+       
+        this.showMissedNotification(habit);
+      }
+    });
+  }
+
+  showMissedNotification(habit) {
+    try {
+      new Notification('Missed Habit', {
+        body: `You missed your daily habit: ${habit.name}`,
+        icon: '/favicon.ico',
+      });
+    } catch (error) {
+      console.error('Error showing missed notification:', error);
+      toast.error('Error showing missed notification');
     }
   }
 }
