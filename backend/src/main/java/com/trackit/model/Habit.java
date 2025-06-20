@@ -47,6 +47,12 @@ public class Habit {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+    @Column(name = "recurrence", nullable = false)
+    private String recurrence = "daily";
+
+    @Column(name = "category", nullable = false)
+    private String category = "general";
+
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

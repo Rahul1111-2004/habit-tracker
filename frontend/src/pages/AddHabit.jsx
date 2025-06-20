@@ -8,6 +8,7 @@ import {
   Button,
   Paper,
   Grid,
+  MenuItem,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -22,6 +23,8 @@ const AddHabit = () => {
     name: '',
     note: '',
     reminderTime: new Date(),
+    recurrence: 'daily',
+    category: 'general',
   });
   const [errors, setErrors] = useState({});
 
@@ -48,10 +51,12 @@ const AddHabit = () => {
           name: formData.name,
           note: formData.note,
           reminderTime: formData.reminderTime.toISOString(),
+          recurrence: formData.recurrence,
+          category: formData.category,
         });
         toast.success('Habit added successfully!');
         
-        // Schedule notification if reminder time is set
+       
         if (formData.reminderTime) {
           const notificationId = notificationService.scheduleNotification({
             id: response.data.id,
@@ -59,7 +64,7 @@ const AddHabit = () => {
             reminderTime: formData.reminderTime,
           });
           
-          // Store notification ID in localStorage for persistence
+          
           if (notificationId) {
             const notifications = JSON.parse(localStorage.getItem('habitNotifications') || '{}');
             notifications[response.data.id] = notificationId;
@@ -155,6 +160,35 @@ const AddHabit = () => {
                     )}
                   />
                 </LocalizationProvider>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Recurrence"
+                  name="recurrence"
+                  value={formData.recurrence}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="daily">Daily</MenuItem>
+                  <MenuItem value="weekly">Weekly</MenuItem>
+                  <MenuItem value="custom">Custom</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                >
+                  <MenuItem value="health">Health</MenuItem>
+                  <MenuItem value="productivity">Productivity</MenuItem>
+                  <MenuItem value="personal_growth">Personal Growth</MenuItem>
+                  <MenuItem value="general">General</MenuItem>
+                </TextField>
               </Grid>
               <Grid item xs={12}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>

@@ -17,6 +17,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  MenuItem,
 } from '@mui/material';
 import {
   Delete as DeleteIcon,
@@ -40,6 +41,8 @@ const ViewHabits = () => {
     name: '',
     note: '',
     reminderTime: new Date(),
+    recurrence: 'daily',
+    category: 'general',
   });
 
   const fetchHabits = async () => {
@@ -54,6 +57,10 @@ const ViewHabits = () => {
   useEffect(() => {
     fetchHabits();
   }, []);
+
+  useEffect(() => {
+    notificationService.scheduleMissedHabitNotifications(habits);
+  }, [habits]);
 
   const handleToggleComplete = async (habitId, completed) => {
     try {
@@ -84,7 +91,7 @@ const ViewHabits = () => {
       try {
         await axios.delete(`/habits/${habitId}`);
 
-        // Cancel the notification for this habit
+       
         const notifications = JSON.parse(localStorage.getItem('habitNotifications') || '{}');
         if (notifications[habitId]) {
           notificationService.cancelNotification(notifications[habitId]);
@@ -106,6 +113,7 @@ const ViewHabits = () => {
       name: habit.name,
       note: habit.note || '',
       reminderTime: new Date(habit.reminderTime),
+      recurrence: habit.recurrence || 'daily',
     });
     setEditDialogOpen(true);
   };
@@ -116,6 +124,7 @@ const ViewHabits = () => {
         name: editFormData.name,
         note: editFormData.note,
         reminderTime: editFormData.reminderTime.toISOString(),
+        recurrence: editFormData.recurrence,
       });
       
       setEditDialogOpen(false);
@@ -159,6 +168,8 @@ const ViewHabits = () => {
                         color="text.secondary"
                       >
                         Reminder: {new Date(habit.reminderTime).toLocaleString()}
+                        <br />
+                        Recurrence: {habit.recurrence || 'daily'}
                       </Typography>
                     </>
                   }
@@ -255,6 +266,19 @@ const ViewHabits = () => {
                   )}
                 />
               </LocalizationProvider>
+              <TextField
+                select
+                fullWidth
+                label="Recurrence"
+                name="recurrence"
+                value={editFormData.recurrence}
+                onChange={(e) => setEditFormData({ ...editFormData, recurrence: e.target.value })}
+                margin="normal"
+              >
+                <MenuItem value="daily">Daily</MenuItem>
+                <MenuItem value="weekly">Weekly</MenuItem>
+                <MenuItem value="custom">Custom</MenuItem>
+              </TextField>
             </Box>
           </DialogContent>
           <DialogActions>

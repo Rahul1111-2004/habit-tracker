@@ -72,6 +72,10 @@ public class HabitController {
         habit.setNote(request.get("note"));
         habit.setReminderTime(request.get("reminderTime"));
         habit.setUser(user);
+        String recurrence = request.getOrDefault("recurrence", "daily");
+        habit.setRecurrence(recurrence);
+        String category = request.getOrDefault("category", "general");
+        habit.setCategory(category);
         
         Habit savedHabit = habitRepository.save(habit);
         logger.info("Created habit: {} for user: {}", savedHabit.getName(), username);
@@ -146,7 +150,7 @@ public class HabitController {
 
             habit.setCompleted(completed);
             
-            // Handle completedAt timestamp
+          
             if (completed) {
                 String completedAtStr = (String) request.get("completedAt");
                 if (completedAtStr != null) {
@@ -213,6 +217,16 @@ public class HabitController {
         String reminderTime = request.get("reminderTime");
         if (reminderTime != null) {
             habit.setReminderTime(reminderTime.trim());
+        }
+
+        String recurrence = request.get("recurrence");
+        if (recurrence != null) {
+            habit.setRecurrence(recurrence.trim());
+        }
+
+        String category = request.get("category");
+        if (category != null) {
+            habit.setCategory(category.trim());
         }
 
         Habit updatedHabit = habitRepository.save(habit);

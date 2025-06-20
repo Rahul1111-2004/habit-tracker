@@ -5,7 +5,7 @@ const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return null; // or a loading spinner
+    return null; 
   }
 
   if (!user) {
